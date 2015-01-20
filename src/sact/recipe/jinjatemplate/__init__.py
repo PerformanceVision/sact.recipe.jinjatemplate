@@ -1,14 +1,67 @@
+# -*- coding: utf-8 -*-
+"""
+Buildout recipe for making files out of Jinja2 templates.
+
+Original author: Torgeir Lorange Ostby <torgeilo@gmail.com>
+
+"""
+
+from __future__ import division, print_function, unicode_literals
+
 import os
-import re
 import logging
 
 import jinja2
 import zc.buildout
 from zc.recipe.egg.egg import Eggs
 
+try:
+    ## python2
+    from pipes import quote
+except ImportError:
+    ## python3
+    from shlex import quote
+
 
 log = logging.getLogger(__name__)
 
+
+## Jinja filters ##
+def as_bool(s):
+    """
+    Template filter which translates the given string into a boolean.
+    """
+
+    if s.lower() in ("yes", "true", "1", "on"):
+        return True
+    elif s.lower() in ("no", "false", "0", "off"):
+        return False
+    raise ValueError("Cannot cast '{}' as bool".format(s))
+
+
+## Helpers ##
+
+def ensure_dir(directory):
+    """
+    Ensures that the specified directory exists.
+    """
+
+    if directory and not os.path.exists(directory):
+        os.makedirs(directory)
+
+def get_template(env, path):
+    """
+    Override env.get_template() to log the error message and send a zc.buildout exception instead.
+    """
+
+    try:
+        return env.get_template(path)
+    except jinja2.TemplateNotFound as e:
+        log.error("Could not find the template file: %s", e.name)
+        raise zc.buildout.UserError("Template file not found: {}".format(e.name))
+
+
+## Recipe ##
 
 class Recipe(object):
     """
@@ -29,52 +82,28 @@ class Recipe(object):
         # Validate presence of required options
         if not "template-file" in options:
             log.error("You need to specify a template-file")
-            raise zc.buildout.UserError("No template file specified")
+            raise zc.buildout.UserError("No 'template-file' specified")
+
         if not "target-file" in options:
             log.error("You need to specify a target-file")
-            raise zc.buildout.UserError("No target file specified")
+            raise zc.buildout.UserError("No 'target-file' specified")
 
     def install(self):
         """
         Recipe install function.
         """
 
-        # Helper functions
-
-        def split(s):
-            """
-            Template filter splitting on any whitespace.
-            """
-
-            return re.split("\s+", s.strip())
-
-        def as_bool(s):
-            """
-            Template filter which translates the given string into a boolean.
-            """
-
-            return s.lower() in ("yes", "true", "1", "on")
-
-        def strip_dict(d):
-            """
-            Strips the values of a dictionary in place. All values are assumed
-            to be strings. The same dictionary object is returned.
-            """
-
-            for k, v in d.items():
-                d[k] = v.strip()
-            return d
+        parse_list = lambda s: s.strip().split()
 
         # Validate template and target lists
-        template_files = split(self.options["template-file"])
-        target_files = split(self.options["target-file"])
+        template_files = parse_list(self.options["template-file"])
+        target_files = parse_list(self.options["target-file"])
         if len(template_files) != len(target_files):
             raise zc.buildout.UserError(
                     "The number of template and target files must match")
 
         # Validate and normalise target executable option
-        target_executables = split(self.options.get("target-executable",
-                                                    "false"))
+        target_executables = parse_list(self.options.get("target-executable", "false"))
         target_executables = [as_bool(v) for v in target_executables]
         if len(target_executables) == 1:
             value = target_executables[0]
@@ -85,10 +114,10 @@ class Recipe(object):
                         "must 0, 1 or match the number of template files")
 
         # Assemble lists
-        files = list(zip(template_files, target_files, target_executables))
+        files = zip(template_files, target_files, target_executables)
 
         # Assemble template context
-        context = strip_dict(dict(self.options))
+        context = {k: v.strip() for k, v in self.options.iteritems()}
 
         # Handle eggs specially
         if "eggs" in context:
@@ -99,29 +128,28 @@ class Recipe(object):
 
         # Make options from other parts available.
         part_options = self.buildout
-        if 'parts' not in list(context.keys()):
+        if 'parts' not in context:
             context.update({'parts': part_options})
         else:
             log.error("You should not use parts as a name of a variable,"
                       " since it is used internally by this receipe")
-            raise zc.buildout.UserError("parts used as a variable in %s"
-                                        % self.name)
+            raise zc.buildout.UserError("parts used as a variable in {}".format(self.name))
 
         # Set up jinja2 environment
-        jinja2_env = self._jinja2_env(filters={
-            "split": split,
-            "as_bool": as_bool,
-            "type": type,
+        jinja2_env = self.create_jinja2_env(
+            filters={
+                "as_bool": as_bool,
+                "shell_quote": quote,
         })
 
         # Load, render, and save files
         for template_file, target_file, executable in files:
-            template = self._load_template(jinja2_env, template_file)
+            template = get_template(jinja2_env, template_file)
             output = template.render(**context)
 
             # Make target file
             target_file = os.path.abspath(target_file)
-            self._ensure_dir(os.path.dirname(target_file))
+            ensure_dir(os.path.dirname(target_file))
 
             fp = open(target_file, "wt")
             fp.write(output)
@@ -142,7 +170,7 @@ class Recipe(object):
 
         self.install()
 
-    def _jinja2_env(self, filters=None):
+    def create_jinja2_env(self, filters=None):
         """
         Creates a Jinja2 environment.
         """
@@ -150,27 +178,16 @@ class Recipe(object):
         base = os.path.abspath(os.path.join(
                 self.buildout["buildout"]["directory"],
                 self.options.get("base-dir", "")))
-        env = jinja2.Environment(loader=jinja2.FileSystemLoader(base))
+        env = jinja2.Environment(
+            loader=jinja2.FileSystemLoader(base),
+            trim_blocks=True,
+            lstrip_blocks=True,
+        )
         if filters:
             env.filters.update(filters)
+
+        add_builtins = ['int', 'len', 'min', 'max', 'all', 'any', 'sorted', 'zip', 'bool']
+        for b in add_builtins:
+            env.globals[b] = __builtins__[b]
+
         return env
-
-    def _load_template(self, env, path):
-        """
-        Tried to load the Jinja2 template given by the environment and
-        template path.
-        """
-
-        try:
-            return env.get_template(path)
-        except jinja2.TemplateNotFound as e:
-            log.error("Could not find the template file: %s" % e.name)
-            raise zc.buildout.UserError("Template file not found: %s" % e.name)
-
-    def _ensure_dir(self, directory):
-        """
-        Ensures that the specified directory exists.
-        """
-
-        if directory and not os.path.exists(directory):
-            os.makedirs(directory)

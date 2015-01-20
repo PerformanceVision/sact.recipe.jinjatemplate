@@ -2,7 +2,9 @@
 sact.recipe.jinjatemplate
 =========================
 
-sact.recipe.jinjatemplate is a Buildout recipe for generating files using Jinja2 templates. It's a friendly fork of amplecode.recipe.template (not maintained).
+sact.recipe.jinjatemplate is a Buildout recipe for generating files
+using Jinja2 templates. It's a friendly fork of
+amplecode.recipe.template (no more maintained).
 
 Buildout Options
 ================

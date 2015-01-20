@@ -3,8 +3,8 @@ from setuptools import setup, find_packages
 setup(
       name="sact.recipe.jinjatemplate",
       version="1.0",
-      author="Sebastien Douche",
-      author_email="sdouche@gmail.com",
+      author="Securactive",
+      author_email="dev@securative.net",
       url="http://github.com/securactive/sact.recipe.jinjatemplate",
       description="Buildout recipe for making files out of Jinja2 templates",
       long_description=open("README.rst").read() + open("CHANGELOG.rst").read(),
