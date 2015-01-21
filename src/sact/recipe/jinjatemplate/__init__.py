@@ -117,7 +117,7 @@ class Recipe(object):
         files = zip(template_files, target_files, target_executables)
 
         # Assemble template context
-        context = {k: v.strip() for k, v in self.options.iteritems()}
+        context = {k: v.strip() for k, v in self.options.items()}
 
         # Handle eggs specially
         if "eggs" in context:

@@ -20,10 +20,10 @@ Additional options are simply forwarded to the templates, and options from all t
 Lists of Values
 ===============
 
-It is possible for a recipe option to contain one or more values, separated by whitespace. A split filter is available for when you want to iterate over the whitespace separated values in your Jinja2 template::
+It is possible for a recipe option to contain one or more values, separated by whitespace.
 
   #!/bin/sh
-  {% for cmd in cmds|split %}
+  {% for cmd in cmds.split() %}
      echo "{{ cmd }}"
   {% endfor %}
 
@@ -62,3 +62,13 @@ foo.txt is created from myapp/foo.txt.jinja2, bar.sh is created from myapp/bar.s
       true
   project_name = Another Example
   author = Me
+
+
+Templating Shell Scripts
+========================
+
+If you use this recipe to template shell scripts, it is STRONGLY
+recommanded to use the filter 'shell_quote' to avoid bad surprises.
+
+  #!/bin/sh
+  rm -rf -- {{ path|shell_quote }}
