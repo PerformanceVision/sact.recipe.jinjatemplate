@@ -1,4 +1,12 @@
 
+Version 1.2 (2015-01-23)
+------------------------
+
+* Updates tests
+* Add the 'type' builtin in the Environment globals
+* Update the documentation
+
+
 Version 1.1 (2015-01-21)
 ------------------------
 

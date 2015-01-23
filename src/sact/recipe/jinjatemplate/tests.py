@@ -27,12 +27,6 @@ class TestRecipe(unittest.TestCase):
         self.assertEquals(result_lines[0], expected_without_quote)
         self.assertEquals(result_lines[1], expected_with_quote)
 
-    def test_split(self):
-        file_path = os.path.join(self.result_dir, "test_split.result")
-        result = open(file_path).read()
-        expected = "a\nb\nc\nd\n"
-        self.assertEquals(result, expected)
-
     def test_builtins(self):
         file_path = os.path.join(self.result_dir, "test_builtins.result")
         result = open(file_path).read()

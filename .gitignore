@@ -7,3 +7,4 @@ parts
 *.egg-info
 *.pyc
 .installed.cfg
+*.result
