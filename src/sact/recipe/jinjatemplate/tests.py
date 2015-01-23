@@ -18,17 +18,23 @@ class TestRecipe(unittest.TestCase):
 
     def test_shell(self):
         file_shell_path = os.path.join(self.result_dir, "test_shell.result")
-        file_shell = open(file_shell_path).read()
+        result = open(file_shell_path).read()
 
-        result_without_quote = "; rm -rf /*"
-        result_with_quote = "'; rm -rf /*'"
+        expected_without_quote = "; rm -rf /*"
+        expected_with_quote = "'; rm -rf /*'"
 
-        lines = file_shell.split('\n')
-        self.assertEquals(lines[0], result_without_quote)
-        self.assertEquals(lines[1], result_with_quote)
+        result_lines = result.split('\n')
+        self.assertEquals(result_lines[0], expected_without_quote)
+        self.assertEquals(result_lines[1], expected_with_quote)
 
     def test_split(self):
-        file1_path = os.path.join(self.result_dir, "test_split.result")
-        file1 = open(file1_path).read()
-        result = "a\nb\nc\nd\n"
-        self.assertEquals(result, file1)
+        file_path = os.path.join(self.result_dir, "test_split.result")
+        result = open(file_path).read()
+        expected = "a\nb\nc\nd\n"
+        self.assertEquals(result, expected)
+
+    def test_builtins(self):
+        file_path = os.path.join(self.result_dir, "test_builtins.result")
+        result = open(file_path).read()
+        expected = "True"
+        self.assertEquals(result, expected)

@@ -25,6 +25,8 @@ except ImportError:
 
 log = logging.getLogger(__name__)
 
+ADD_BUILTINS = ['int', 'len', 'min', 'max', 'all', 'any', 'sorted', 'zip', 'bool', 'type']
+
 
 ## Jinja filters ##
 def as_bool(s):
@@ -140,7 +142,7 @@ class Recipe(object):
             filters={
                 "as_bool": as_bool,
                 "shell_quote": quote,
-        })
+            })
 
         # Load, render, and save files
         for template_file, target_file, executable in files:
@@ -178,16 +180,17 @@ class Recipe(object):
         base = os.path.abspath(os.path.join(
                 self.buildout["buildout"]["directory"],
                 self.options.get("base-dir", "")))
+
         env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(base),
             trim_blocks=True,
             lstrip_blocks=True,
         )
+
         if filters:
             env.filters.update(filters)
 
-        add_builtins = ['int', 'len', 'min', 'max', 'all', 'any', 'sorted', 'zip', 'bool']
-        for b in add_builtins:
-            env.globals[b] = __builtins__[b]
+        ## Add some python builtins as jinja globals
+        env.globals.update({name: __builtins__[name] for name in ADD_BUILTINS})
 
         return env
