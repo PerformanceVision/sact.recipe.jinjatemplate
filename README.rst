@@ -20,7 +20,8 @@ Additional options are simply forwarded to the templates, and options from all t
 Lists of Values
 ===============
 
-It is possible for a recipe option to contain one or more values, separated by whitespace.::
+The `split` filter was removed in the 1.2. It is still possible for a
+recipe option to contain one or more values, separated by whitespace::
 
   #!/bin/sh
   {% for cmd in cmds.split() %}
@@ -68,7 +69,7 @@ Templating Shell Scripts
 ========================
 
 If you use this recipe to template shell scripts, it is STRONGLY
-recommanded to use the filter 'shell_quote' to avoid bad surprises.::
+recommanded to use the filter 'shell_quote' to avoid bad surprises::
 
   #!/bin/sh
   rm -rf -- {{ path|shell_quote }}
