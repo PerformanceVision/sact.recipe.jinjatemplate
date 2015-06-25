@@ -9,6 +9,8 @@ Original author: Torgeir Lorange Ostby <torgeilo@gmail.com>
 from __future__ import division, print_function, unicode_literals
 
 import os
+import string
+import random
 import logging
 
 import jinja2
@@ -39,6 +41,12 @@ def as_bool(s):
     elif s.lower() in ("no", "false", "0", "off"):
         return False
     raise ValueError("Cannot cast '{}' as bool".format(s))
+
+## Jinja builtins ##
+
+def randomstring(length):
+    characters = string.letters + string.digits
+    return "".join(random.choice(characters) for _ in range(length))
 
 
 ## Helpers ##
@@ -82,11 +90,11 @@ class Recipe(object):
         self.options = options
 
         # Validate presence of required options
-        if not "template-file" in options:
+        if "template-file" not in options:
             log.error("You need to specify a template-file")
             raise zc.buildout.UserError("No 'template-file' specified")
 
-        if not "target-file" in options:
+        if "target-file" not in options:
             log.error("You need to specify a target-file")
             raise zc.buildout.UserError("No 'target-file' specified")
 
@@ -140,8 +148,11 @@ class Recipe(object):
         # Set up jinja2 environment
         jinja2_env = self.create_jinja2_env(
             filters={
-                "as_bool": as_bool,
+                "as_bool":     as_bool,
                 "shell_quote": quote,
+            },
+            builtins={
+                "randomstring": randomstring,
             })
 
         # Load, render, and save files
@@ -172,7 +183,7 @@ class Recipe(object):
 
         self.install()
 
-    def create_jinja2_env(self, filters=None):
+    def create_jinja2_env(self, filters=None, builtins=None):
         """
         Creates a Jinja2 environment.
         """
@@ -189,6 +200,9 @@ class Recipe(object):
 
         if filters:
             env.filters.update(filters)
+
+        if builtins:
+            env.globals.update(builtins)
 
         ## Add some python builtins as jinja globals
         env.globals.update({name: __builtins__[name] for name in ADD_BUILTINS})
