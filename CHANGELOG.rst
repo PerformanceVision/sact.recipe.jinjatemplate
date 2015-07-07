@@ -1,3 +1,8 @@
+Version 1.3 (2015-07-07)
+------------------------
+
+* Added Jinja function to generate a random string
+
 
 Version 1.2.1 (2015-01-27)
 --------------------------

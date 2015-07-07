@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
       name="sact.recipe.jinjatemplate",
-      version="1.2.1",
+      version="1.3.0",
       author="Securactive",
       author_email="dev@securactive.net",
       url="http://github.com/securactive/sact.recipe.jinjatemplate",
